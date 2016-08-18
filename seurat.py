@@ -62,6 +62,7 @@ r = 6
 mind = 10
 
 def makecircle(image, coord, rad, color):
+    # fill with low alpha
     draw.ellipse((coord[0] - rad, coord[1] - rad, coord[0] + rad, coord[1] + rad), fill = color)
 
 opened = Image.open("bear.jpg")
