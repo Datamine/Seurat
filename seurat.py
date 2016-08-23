@@ -27,14 +27,14 @@ def no_neighbors(point, sample_points, tree, mindist):
         tree : cKDTree
         mindist : float
     """
-    distances, indexes = tree.query(point, len(sample_points) + 1, distance_upper_bound = mindist)
-    if len(distances)==0:
+    distance, idx = tree.query(point, 1, distance_upper_bound = mindist)
+    if distance==None:
+        print "this is a real condition"
         return False
-    for dist, index in zip(distances, indexes):
-        if np.isinf(dist):
-            return True
-        if dist < mindist:
-            return False
+    if distance < mindist:
+        return False
+    if np.isinf(distance):
+        return True
 
 def get_poisson_points(image, minimum_distance_between_samples, radius):
     """
@@ -45,7 +45,7 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
     first_point = (random.uniform(0, h), random.uniform(0,w))
     to_process = [first_point]
     sample_points = [first_point]
-    tree = cKDTree(sample_points)
+    tree = cKDTree(sample_points)#, compact_nodes=False)
 
     while to_process:
         pt = to_process.pop(random.randrange(len(to_process)))
@@ -58,8 +58,8 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
                 tree = cKDTree(sample_points)
     return sample_points
 
-r = 6
-mind = 10
+r = 3
+mind = 5
 
 def makecircle(image, coord, rad, color):
     # fill with low alpha
@@ -69,10 +69,15 @@ opened = Image.open("bear.jpg")
 new = Image.new("RGB", opened.size, "white")
 draw = ImageDraw.Draw(new)
 
+import time
+
 # five repetitions
 for i in range(5):
     print i
+    start = time.clock()
     sample_points = get_poisson_points(opened, 2*r, mind)
+    end = time.clock()
+    print (end-start)/1000.0
 
     for point in sample_points:
         samplecolor = opened.getpixel(point)
