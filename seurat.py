@@ -1,11 +1,9 @@
 from skimage.io import imread, imsave
 from scipy.spatial import cKDTree
-import ImageDraw
+from PIL import ImageDraw, Image
 import random
 import math
 import numpy as np
-
-import Image
 
 def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     """
@@ -16,8 +14,8 @@ def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
         upper_bound_radius : float
     """
     radius = random.uniform(lower_bound_radius, upper_bound_radius)
-    angle = random.uniform(0, 2* math.pi)
-    offset = np.array([radius * math.sin(angle), radius*math.cos(angle)])
+    angle = random.uniform(0, 2 * math.pi)
+    offset = np.array([radius * math.sin(angle), radius * math.cos(angle)])
     return tuple(seed + offset)
 
 def no_neighbors(point, sample_points, tree, mindist):
@@ -27,10 +25,7 @@ def no_neighbors(point, sample_points, tree, mindist):
         tree : cKDTree
         mindist : float
     """
-    distance, idx = tree.query(point, 1, distance_upper_bound = mindist)
-    if distance==None:
-        print "this is a real condition"
-        return False
+    distance, _ = tree.query(point, 1, distance_upper_bound = mindist)
     if distance < mindist:
         return False
     if np.isinf(distance):
@@ -45,7 +40,8 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
     first_point = (random.uniform(0, h), random.uniform(0,w))
     to_process = [first_point]
     sample_points = [first_point]
-    tree = cKDTree(sample_points)#, compact_nodes=False)
+    #tree = cKDTree(sample_points)
+    tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
 
     while to_process:
         pt = to_process.pop(random.randrange(len(to_process)))
@@ -55,7 +51,7 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
             (no_neighbors(new_point, sample_points, tree, minimum_distance_between_samples)):
                 to_process.append(new_point)
                 sample_points.append(new_point)
-                tree = cKDTree(sample_points)
+                tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
     return sample_points
 
 r = 3
@@ -74,10 +70,10 @@ import time
 # five repetitions
 for i in range(5):
     print i
-    start = time.clock()
+    start = time.time()
     sample_points = get_poisson_points(opened, 2*r, mind)
-    end = time.clock()
-    print (end-start)/1000.0
+    end = time.time()
+    print (end-start)
 
     for point in sample_points:
         samplecolor = opened.getpixel(point)

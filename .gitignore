@@ -3,3 +3,4 @@ venv/
 *.swa
 *.swo
 test.py
+output.png
