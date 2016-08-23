@@ -1,9 +1,17 @@
-from skimage.io import imread, imsave
 from scipy.spatial import cKDTree
 from PIL import ImageDraw, Image
 import random
 import math
 import numpy as np
+
+def circle_perimeter(x_bound, y_bound, point, radius):
+    """
+    x-bound: represents the width of the image. i.e. x coord can be [0, x).
+    y-bound: represents the height of the image. i.e. y coord can be [0, y).
+    point: tuple representing the point at the center of which we define a circle
+    radius: float
+    """
+    
 
 def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     """
@@ -28,8 +36,8 @@ def no_neighbors(point, sample_points, tree, mindist):
     distance, _ = tree.query(point, 1, distance_upper_bound = mindist)
     if distance < mindist:
         return False
-    if np.isinf(distance):
-        return True
+    # otherwise distance is inf.
+    return True
 
 def get_poisson_points(image, minimum_distance_between_samples, radius):
     """
@@ -40,7 +48,6 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
     first_point = (random.uniform(0, h), random.uniform(0,w))
     to_process = [first_point]
     sample_points = [first_point]
-    #tree = cKDTree(sample_points)
     tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
 
     while to_process:
@@ -68,7 +75,7 @@ draw = ImageDraw.Draw(new)
 import time
 
 # five repetitions
-for i in range(5):
+for i in range(1):
     print i
     start = time.time()
     sample_points = get_poisson_points(opened, 2*r, mind)
@@ -80,4 +87,4 @@ for i in range(5):
         new_point = (int(point[0]), int(point[1]))
         makecircle(new, new_point, r, samplecolor)
 
-new.save("output.png")
+new.save("output2.png")
