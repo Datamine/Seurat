@@ -1,6 +1,9 @@
 from PIL import Image
 
 def circle(x0, y0, radius):
+    """
+    adapted from wikipedia article
+    """
     x = radius
     y = 0
     err = 0

@@ -4,14 +4,41 @@ import random
 import math
 import numpy as np
 
-def circle_perimeter(x_bound, y_bound, point, radius):
+def clip(value,bound):
+    """
+    caps a value such that it is in the interval [0,bound). values outside
+    the interval get mapped to the appropriate interval extreme.
+    - NB: value/bound is assumed to be an integer.
+    """
+    return max(0,min(value,bound-1))
+
+def circle_perimeter(x_bound, y_bound, x0, y0, radius):
     """
     x-bound: represents the width of the image. i.e. x coord can be [0, x).
     y-bound: represents the height of the image. i.e. y coord can be [0, y).
     point: tuple representing the point at the center of which we define a circle
     radius: float
     """
-    
+    x = radius
+    y = 0
+    err = 0
+    while x >= y:
+        coords =   [(clip(x0 + x, x_bound), clip(y0 + y, y_bound)),
+                    (clip(x0 - x, x_bound), clip(y0 + y, y_bound)),
+                    (clip(x0 + x, x_bound), clip(y0 - y, y_bound)),
+                    (clip(x0 - x, x_bound), clip(y0 - y, y_bound)),
+                    (clip(x0 + y, x_bound), clip(y0 + x, y_bound)),
+                    (clip(x0 - y, x_bound), clip(y0 + x, y_bound)),
+                    (clip(x0 + y, x_bound), clip(y0 - x, y_bound)),
+                    (clip(x0 - y, x_bound), clip(y0 - x, y_bound))]
+        y += 1
+        err += 1 + 2*y
+        if 2*(err-x) + 1 > 0:
+            x -= 1
+            err += 1 - 2*x
+        yield coords
+
+
 
 def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     """
