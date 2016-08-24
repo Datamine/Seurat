@@ -1,4 +1,5 @@
 from PIL import Image
+import numpy as np
 
 """
 small library to handle 'drawing' in a matrix
@@ -17,7 +18,7 @@ def make_none_matrix(h,w):
     """
     makes a matrix the size of the image, filled with NaN
     """
-    matrix = np.empty((h,w,))
+    matrix = np.empty((h,w,3))
     matrix[:] = np.NAN
     return matrix
 
@@ -50,8 +51,10 @@ def circle_perimeter(x_bound, y_bound, x0, y0, radius):
 
 def drawline(imagematrix, x, y0, y1):
     # no need to return: update the object in place
+    #if y0  < y1:
+    #    y0, y1 = y1, y0
     for y in range(y0, y1 + 1):
-        imagematrix[x][y] = (0,0,0)
+        imagematrix[x][y] = [4,150,40]
 
 def circle_fill(imagematrix, x_bound, y_bound, x0, y0, radius):
     """

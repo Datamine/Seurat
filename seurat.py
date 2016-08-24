@@ -1,4 +1,3 @@
-from scipy.spatial import cKDTree
 from PIL import ImageDraw, Image
 from matrix_image import *
 import random
@@ -12,10 +11,14 @@ def check_candidate(imagematrix, x_bound, y_bound, x0, y0, radius):
     """
     # we use a generator to iteratively check the points on the perimeter
     # rather than generating them all at once, which would take much longer. 
+    #print ">>>", x_bound, y_bound
     for coords in circle_perimeter(x_bound, y_bound, x0, y0, radius):
         for (x,y) in coords:
             # we set all pixels in the imagematrix to None at first.
-            if np.isnan(imagematrix[x][y]):
+            #print x, y
+            if np.isnan(imagematrix[x][y][0]):
+                continue
+            else:
                 return False
     return True
 
@@ -30,7 +33,7 @@ def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     radius = random.uniform(lower_bound_radius, upper_bound_radius)
     angle = random.uniform(0, 2 * math.pi)
     offset = np.array([radius * math.sin(angle), radius * math.cos(angle)])
-    return tuple(seed + offset)
+    return tuple(map(int, seed + offset))
 
 def get_poisson_points(image, minimum_distance_between_samples, radius):
     """
@@ -49,36 +52,37 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
         for _ in range(30):
             new_point = generate_random_point_around(pt, radius, 2*radius)
             if (0 <= new_point[0] < h) and (0 <= new_point[1] < w) and \
-            check_candidate(output, w, h, new_point[0], new_point[1], radius):
+            check_candidate(output, h, w, new_point[0], new_point[1], radius):
+                #print "get here"
                 to_process.append(new_point)
-                circle_fill(output, w, h, new_point[0], new_point[1], radius)
+                circle_fill(output, h, w, new_point[0], new_point[1], radius)
                 #tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
     # return a list
-    output.flatten()
+    output = output.reshape((h,w,3))
     return output
 
-r = 3
-mind = 5
+r = 8
+mindist = 15
 
 opened = Image.open("bear.jpg")
 opened_h = opened.size[0]
 opened_w = opened.size[1]
 new = Image.new("RGB", opened.size, "white")
-draw = ImageDraw.Draw(new)
-
 
 # five repetitions
 for i in range(1):
     print i
     start = time.time()
-    imagelist = get_poisson_points(opened, 2*r, mind)
+    imagelist = get_poisson_points(opened, 2*r, mindist)
     end = time.time()
     print (end-start)
+    #print imagelist.shape
 
     for i in range(len(imagelist)):
-        if not np.isnan(imagelist[i]):
-            x_coord = i / w
-            y_coord = i % w
-            new.putpixel((x_coord, y_coord), imagelist[i])
+        for j in range(len(imagelist[i])):
+            #print imagelist[i][j]
+            if not np.isnan(imagelist[i][j][0]):
+                new.putpixel((i, j), tuple(map(int, imagelist[i][j])))
+
 
 new.save("output2.png")
