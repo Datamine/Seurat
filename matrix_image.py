@@ -66,11 +66,8 @@ def circle_fill(imagematrix, x_bound, y_bound, x0, y0, radius):
     err = 0
     while x >= y:
         drawline(imagematrix, clip(x0 + x, x_bound), clip(y0 + y, y_bound), clip(y0 - y, y_bound))
-        
         drawline(imagematrix, clip(x0 - x, x_bound), clip(y0 + y, y_bound), clip(y0 - y, y_bound))
-        
         drawline(imagematrix, clip(x0 + y, x_bound), clip(y0 + x, y_bound), clip(y0 - x, y_bound))
-        
         drawline(imagematrix, clip(x0 - y, x_bound), clip(y0 - x, y_bound), clip(y0 + x, y_bound))
 
         y += 1
@@ -78,5 +75,4 @@ def circle_fill(imagematrix, x_bound, y_bound, x0, y0, radius):
         if 2*(err-x) + 1 > 0:
             x -= 1
             err += 1 - 2*x
-
 
