@@ -17,8 +17,10 @@ def check_candidate(imagematrix, x_bound, y_bound, x0, y0, radius):
             # we set all pixels in the imagematrix to None at first.
             #print x, y
             if np.isnan(imagematrix[x][y][0]):
+                #imagematrix[x][y] = [0,0,255]
                 continue
             else:
+                imagematrix[x][y] = [255,0,0]
                 return False
     return True
 
@@ -35,9 +37,10 @@ def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     offset = np.array([radius * math.sin(angle), radius * math.cos(angle)])
     return tuple(map(int, seed + offset))
 
-def get_poisson_points(image, minimum_distance_between_samples, radius):
+def get_poisson_points(image, mindist, radius):
     """
     runs the poisson disc algorithm to generate sample points.
+    mindist: minimum distance between samples
     """
     h = image.size[0]
     w = image.size[1]
@@ -45,24 +48,21 @@ def get_poisson_points(image, minimum_distance_between_samples, radius):
 
     first_point = (random.uniform(0, h), random.uniform(0,w))
     to_process = [first_point]
-    #tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
 
     while to_process:
         pt = to_process.pop(random.randrange(len(to_process)))
         for _ in range(30):
-            new_point = generate_random_point_around(pt, radius, 2*radius)
+            new_point = generate_random_point_around(pt, mindist, 2*mindist)
             if (0 <= new_point[0] < h) and (0 <= new_point[1] < w) and \
             check_candidate(output, h, w, new_point[0], new_point[1], radius):
-                #print "get here"
                 to_process.append(new_point)
                 circle_fill(output, h, w, new_point[0], new_point[1], radius)
-                #tree = cKDTree(sample_points, compact_nodes=False, balanced_tree=False)
-    # return a list
+
     output = output.reshape((h,w,3))
     return output
 
-r = 8
-mindist = 15
+r = 5
+mindist = 100
 
 opened = Image.open("bear.jpg")
 opened_h = opened.size[0]
@@ -73,7 +73,7 @@ new = Image.new("RGB", opened.size, "white")
 for i in range(1):
     print i
     start = time.time()
-    imagelist = get_poisson_points(opened, 2*r, mindist)
+    imagelist = get_poisson_points(opened, mindist, 2*r)
     end = time.time()
     print (end-start)
     #print imagelist.shape
@@ -84,5 +84,4 @@ for i in range(1):
             if not np.isnan(imagelist[i][j][0]):
                 new.putpixel((i, j), tuple(map(int, imagelist[i][j])))
 
-
-new.save("output2.png")
+new.save("output3.png")

@@ -51,9 +51,13 @@ def circle_perimeter(x_bound, y_bound, x0, y0, radius):
 
 def drawline(imagematrix, x, y0, y1):
     # no need to return: update the object in place
-    #if y0  < y1:
-    #    y0, y1 = y1, y0
-    for y in range(y0, y1 + 1):
+    if y0 < y1:
+        low = y0
+        high = y1
+    else:
+        high = y0
+        low = y1
+    for y in range(low, high + 1):
         imagematrix[x][y] = [4,150,40]
 
 def circle_fill(imagematrix, x_bound, y_bound, x0, y0, radius):
