@@ -16,3 +16,6 @@ when working with a large image, since that requires a large tree construction. 
 couldn't find a Python implementation. Then I realized that of course I don't need the fully abstract solution, but could do
 an iterative solution with pixel-checking using the midpoint circle algorithm to check along the perimeter of a proposed
 circle.
+
+NB this algo results in clusterings when mindist > 2*r. 
+
