@@ -64,7 +64,7 @@ def get_poisson_points(image, mindist, radius):
     output = output.reshape((h,w,3))
     return output
 
-r = 3
+r = 20
 mindist = 150
 
 opened = Image.open("bear.jpg")
