@@ -5,48 +5,42 @@ import math
 import numpy as np
 import time
 
-def check_candidate(imagematrix, x_bound, y_bound, x0, y0, circle_radius, circle_mindist):
+def has_neighbors(imagematrix, x_bound, y_bound, x0, y0, circle_radius, circle_mindist):
     """
-    check whether a given point has any neighbors. Returns False if so.
+    check whether a given point has any neighbors. Returns True if so.
     """
     # print x_bound, y_bound, x0, y0, circle_radius, circle_mindist
     # grid check for the moment instead of the maximum efficiency perimeter check,
     # because i'm lazy. gonna see if this is fast enough
+    # print circle_radius
     
-    for x in     xrange(clip(x0 - circle_mindist, x_bound), clip(x0 + circle_mindist, x_bound), circle_radius - 1):
-        for y in xrange(clip(y0 - circle_mindist, y_bound), clip(y0 + circle_mindist, y_bound), circle_radius - 1):
+    # trigonometry: this is as large as you can space out the points (in a grid) while intersecting any circle placed on them
+    stepsize = int(math.floor(2**0.5 * circle_radius))
+    
+    # we add the last element to make sure we exhaust the entire relevant range
+    x_range = range(clip(x0 - circle_mindist, x_bound), clip(x0 + circle_mindist, x_bound), stepsize) + [clip(x0 + circle_mindist, x_bound)]
+    for x in x_range:
+        height = int(math.ceil((circle_mindist**2 - (x-x0)**2 )**0.5))
+        y_range = range(clip(y0 - height, y_bound), clip(y0 + height, y_bound), stepsize) + [clip(y0 + height, y_bound)]
+
+        for y in y_range:
             if np.isnan(imagematrix[x][y][0]):
+                #print imagematrix[x][y]
                 continue
             else:
                 # we didnt actually check if the datapoint is in the circle yet.
                 # we're doing this grid search so we have to.
+                # imagematrix[x][y] = [255,0,0]
+                return True
+                """
                 if ((x-x0)**2 + (y-y0)**2)**0.5 <= circle_mindist:
-                    imagematrix[x][y] = [255,0,0]
-                    return False
+
                 else:
+                    print imagematrix[x][y]
+                    imagematrix[x][y] = [0,0,255]
                     continue
-    
-    """
-    # we use a generator to iteratively check the points on the perimeter
-    # rather than generating them all at once, which would take much longer. 
-    #print ">>>", x_bound, y_bound
-    
-    for coords in circle_perimeter(x_bound, y_bound, x0, y0, radius):
-        for (x,y) in coords:
-            # we set all pixels in the imagematrix to None at first.
-            if np.isnan(imagematrix[x][y][0]):
-                #imagematrix[x][y] = [0,0,255]
-                continue
-            else:
-                imagematrix[x][y] = [255,0,0]
-                return False
-    
-    # gotta check inside as well
-    if not np.isnan(imagematrix[x0][y0][0]):
-        return False
-    return True
-    """
-    return True
+                """
+    return False
 
 def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
     """
@@ -76,16 +70,20 @@ def get_poisson_points(image, mindist, radius):
     while to_process:
         pt = to_process.pop(random.randrange(len(to_process)))
         for _ in range(30):
-            new_point = generate_random_point_around(pt, r+mindist, 2*(r+mindist))
-            if (0 <= new_point[0] < h) and (0 <= new_point[1] < w) and check_candidate(output, h, w, new_point[0], new_point[1], radius, mindist):
+            new_point = generate_random_point_around(pt, (2*r)+mindist, (3*r)+mindist)
+            if (0 <= new_point[0] < h) and (0 <= new_point[1] < w) and (not has_neighbors(output, h, w, new_point[0], new_point[1], radius, radius+mindist)):
                 to_process.append(new_point)
-                circle_fill(output, h, w, new_point[0], new_point[1], radius)
+                circle_fill(output, h, w, new_point[0], new_point[1], 2*radius)
 
+    """
+    print    output.shape
     output = output.reshape((h,w,3))
+    print output.shape
+    """
     return output
 
 r = 20
-mindist = 250
+mindist = 50
 
 opened = Image.open("bear.jpg")
 opened_h = opened.size[0]
@@ -96,7 +94,7 @@ new = Image.new("RGB", opened.size, "white")
 for i in range(1):
     print i
     start = time.time()
-    imagelist = get_poisson_points(opened, mindist, 2*r)
+    imagelist = get_poisson_points(opened, mindist, r)
     end = time.time()
     print (end-start)
     #print imagelist.shape
