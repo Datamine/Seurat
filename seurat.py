@@ -1,4 +1,4 @@
-from PIL import ImageDraw, Image
+from PIL import ImageFilter, Image
 from matrix_image import *
 import random
 import math
@@ -9,11 +9,6 @@ def has_neighbors(imagematrix, x_bound, y_bound, x0, y0, circle_radius, circle_m
     """
     check whether a given point has any neighbors. Returns True if so.
     """
-    # print x_bound, y_bound, x0, y0, circle_radius, circle_mindist
-    # grid check for the moment instead of the maximum efficiency perimeter check,
-    # because i'm lazy. gonna see if this is fast enough
-    # print circle_radius
-    
     # trigonometry: this is as large as you can space out the points (in a grid) while intersecting any circle placed on them
     stepsize = int(math.floor(2**0.5 * circle_radius))
     
@@ -21,25 +16,14 @@ def has_neighbors(imagematrix, x_bound, y_bound, x0, y0, circle_radius, circle_m
     x_range = range(clip(x0 - circle_mindist, x_bound), clip(x0 + circle_mindist, x_bound), stepsize) + [clip(x0 + circle_mindist, x_bound)]
     for x in x_range:
         height = int(math.ceil((circle_mindist**2 - (x-x0)**2 )**0.5))
+        
+        # we do this particular y range in order not to check the 1/4 of the grid that does not contain the circle.
         y_range = range(clip(y0 - height, y_bound), clip(y0 + height, y_bound), stepsize) + [clip(y0 + height, y_bound)]
-
         for y in y_range:
             if np.isnan(imagematrix[x][y][0]):
-                #print imagematrix[x][y]
                 continue
             else:
-                # we didnt actually check if the datapoint is in the circle yet.
-                # we're doing this grid search so we have to.
-                # imagematrix[x][y] = [255,0,0]
                 return True
-                """
-                if ((x-x0)**2 + (y-y0)**2)**0.5 <= circle_mindist:
-
-                else:
-                    print imagematrix[x][y]
-                    imagematrix[x][y] = [0,0,255]
-                    continue
-                """
     return False
 
 def generate_random_point_around(seed, lower_bound_radius, upper_bound_radius):
@@ -73,36 +57,55 @@ def get_poisson_points(image, mindist, radius):
             new_point = generate_random_point_around(pt, (2*r)+mindist, (3*r)+mindist)
             if (0 <= new_point[0] < h) and (0 <= new_point[1] < w) and (not has_neighbors(output, h, w, new_point[0], new_point[1], radius, radius+mindist)):
                 to_process.append(new_point)
-                circle_fill(output, h, w, new_point[0], new_point[1], 2*radius)
-
-    """
-    print    output.shape
-    output = output.reshape((h,w,3))
-    print output.shape
-    """
+                color = image.getpixel(new_point)
+                circle_fill(color, output, h, w, new_point[0], new_point[1], radius)
     return output
 
-r = 20
-mindist = 50
+r = 3
+mindist = 5
 
 opened = Image.open("bear.jpg")
 opened_h = opened.size[0]
 opened_w = opened.size[1]
-new = Image.new("RGB", opened.size, "white")
+#new = Image.new("RGBA", opened.size, (255,255,255,255))
+new = opened.filter(ImageFilter.GaussianBlur(radius=4))
+#ew = new.convert("RGBA")
 
 # five repetitions
-for i in range(1):
-    print i
+rangelim = 5
+for layer in range(rangelim):
+    layer_image = Image.new("RGB", opened.size)
+    # print layer_image.getpixel((0,0))
+    print "layer", layer
     start = time.time()
     imagelist = get_poisson_points(opened, mindist, r)
     end = time.time()
     print (end-start)
-    #print imagelist.shape
 
     for i in range(len(imagelist)):
         for j in range(len(imagelist[i])):
-            #print imagelist[i][j]
             if not np.isnan(imagelist[i][j][0]):
-                new.putpixel((i, j), tuple(map(int, imagelist[i][j])))
-
-new.save("output3.png")
+                layer_image.putpixel((i, j), tuple(map(int, imagelist[i][j])))
+            else:
+                layer_image.putpixel((i,j), new.getpixel((i,j)))
+                #print layer_image.getpixel((i,j))
+    #           could put the pixel from the previous layer here... but that would hit the blur and hurt the alpha overlay strategy.
+    # layer_image = layer_image.filter(ImageFilter.GaussianBlur(radius=2))
+    new = layer_image
+    """
+    for i in range(len(imagelist)):
+        for j in range(len(imagelist)):
+            
+    R, G, B, A = layer_image.split()
+    print A.getpixel((0,0))
+    layer_image = Image.merge("RGB", (R,G,B))
+    mask = Image.merge("L", (A,))
+    new.paste(layer_image, (0,0), mask)
+    """
+    #new = Image.composite(layer_image, new,  mask)
+    #new = Image.alpha_composite(new, layer_image)
+    #new = Image.blend(new, layer_image, 0.05)
+    #new.paste(layer_image, (0, 0), layer_image)
+    if layer == rangelim-1:
+        new = new.filter(ImageFilter.GaussianBlur(radius=1))
+    new.save("output"+str(layer)+".png")
