@@ -61,8 +61,8 @@ def get_poisson_points(image, mindist, radius):
                 circle_fill(color, output, h, w, new_point[0], new_point[1], radius)
     return output
 
-r = 3
-mindist = 5
+r = 2
+mindist = 4
 
 opened = Image.open("bear.jpg")
 opened_h = opened.size[0]
@@ -85,6 +85,8 @@ for layer in range(rangelim):
     for i in range(len(imagelist)):
         for j in range(len(imagelist[i])):
             if not np.isnan(imagelist[i][j][0]):
+                # at this point: blend the current dot with the underlying color 
+                # note that this makes it ok to blend even after the first layer, since it'll have no effect.
                 layer_image.putpixel((i, j), tuple(map(int, imagelist[i][j])))
             else:
                 layer_image.putpixel((i,j), new.getpixel((i,j)))
@@ -107,5 +109,6 @@ for layer in range(rangelim):
     #new = Image.blend(new, layer_image, 0.05)
     #new.paste(layer_image, (0, 0), layer_image)
     if layer == rangelim-1:
-        new = new.filter(ImageFilter.GaussianBlur(radius=1))
+        pass
+        # new = new.filter(ImageFilter.GaussianBlur(radius=1))
     new.save("output"+str(layer)+".png")
